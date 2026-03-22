@@ -34,9 +34,9 @@ app.add_middleware(
 
 # ─── 🔑 SHUDHU EI 2 TA KEY BOSAO ────────────────────────────────────
 
-SCALEDOWN_API_KEY = "Mj3Gew2ryF8stpb2d1XFS4ImruvaV1oFx4GG0gAi"
+SCALEDOWN_API_KEY = "YOUR_SCALEDOWN_API_KEY_HERE"
 
-GROQ_API_KEY = "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"  # <- groq key ta eikhane bosao
+GROQ_API_KEY = "YOUR_GROQ_API_KEY_HERE"  # <- groq key ta eikhane bosao
 
 # ────────────────────────────────────────────────────────────────────
 
