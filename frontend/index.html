@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>UDAAN – AI Tutoring</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root{--primary:#4A90E2;--secondary:#6A5ACD;--success:#28a745;--danger:#dc3545;--warning:#ffc107;--ai-blue:#2563EB;--gradient:linear-gradient(135deg,#74ebd5,#ACB6E5);}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Nunito',sans-serif;background:var(--gradient);display:flex;justify-content:center;align-items:flex-start;min-height:100vh;padding:20px;color:#2c3e50;overflow-y:auto;}
+    .page{display:none;width:100%;max-width:1200px;background:rgba(255,255,255,0.97);padding:30px;border-radius:20px;box-shadow:0 12px 40px rgba(0,0,0,0.15);text-align:center;margin:20px 0;animation:fadeInUp .55s ease forwards;}
+    .page.active{display:block;}
+    @keyframes fadeInUp{from{opacity:0;transform:translateY(32px)}to{opacity:1;transform:translateY(0)}}
+    h1{font-size:2.8rem;font-weight:900;background:linear-gradient(45deg,var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px;}
+    h2{font-size:2rem;font-weight:800;color:#2c3e50;margin-bottom:20px;}
+    h3{color:#2c3e50;margin-bottom:12px;}
+    .btn{background:linear-gradient(45deg,var(--primary),var(--secondary));color:#fff;border:none;padding:13px 22px;margin:10px;border-radius:12px;cursor:pointer;font-size:15px;font-weight:700;transition:all .25s;box-shadow:0 4px 14px rgba(0,0,0,0.15);font-family:'Nunito',sans-serif;min-width:180px;}
+    .btn:hover{transform:translateY(-3px);box-shadow:0 8px 22px rgba(0,0,0,0.2);}
+    .btn:active{transform:scale(0.97);}
+    .btn-secondary{background:linear-gradient(45deg,#6c757d,#5a6268);}
+    .btn-success{background:linear-gradient(45deg,var(--success),#20c997);}
+    .btn-warning{background:linear-gradient(45deg,var(--warning),#fd7e14);}
+    .btn-danger{background:linear-gradient(45deg,var(--danger),#e5256e);}
+    .btn-ai{background:linear-gradient(45deg,#1d4ed8,#7c3aed);}
+    .btn.loading{pointer-events:none;opacity:.75;}
+    .btn.loading::after{content:"";display:inline-block;width:14px;height:14px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;margin-left:10px;vertical-align:middle;}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    input[type="text"],input[type="password"]{width:100%;padding:13px;margin:10px 0;border:1.5px solid #ddd;border-radius:10px;font-size:15px;font-family:'Nunito',sans-serif;transition:all .25s;}
+    input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(74,144,226,.18);}
+    .error{color:var(--danger);font-size:13px;text-align:left;margin:-6px 0 8px;font-weight:600;}
+    .back-btn{background:var(--danger);color:#fff;padding:10px 20px;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-family:'Nunito',sans-serif;display:flex;align-items:center;gap:7px;margin-left:auto;margin-bottom:16px;transition:all .2s;}
+    .back-btn:hover{background:#c82333;transform:translateY(-2px);}
+    .options-container{display:flex;justify-content:center;flex-wrap:wrap;gap:18px;margin-top:30px;}
+    .option-card{background:linear-gradient(135deg,#f8f9ff,#eef2ff);border:2px solid rgba(74,144,226,.2);border-radius:18px;padding:24px 20px;width:185px;cursor:pointer;transition:all .3s;text-align:center;}
+    .option-card:hover{transform:translateY(-6px);box-shadow:0 12px 30px rgba(74,144,226,.25);border-color:var(--primary);}
+    .option-card .icon{font-size:2.4rem;margin-bottom:10px;}
+    .option-card .label{font-weight:800;font-size:14px;color:#2c3e50;}
+    .dashboard{max-width:940px;margin:auto;}
+    .menu-btn{background:#fff;color:var(--primary);padding:15px 18px;margin:8px 0;border-radius:12px;cursor:pointer;font-weight:700;font-size:15px;transition:all .25s;text-align:left;box-shadow:0 3px 10px rgba(0,0,0,.08);display:flex;align-items:center;gap:12px;}
+    .menu-btn:hover{background:#e0f7ff;transform:translateX(5px);}
+    .content{display:none;background:rgba(74,144,226,.05);padding:22px;border-radius:12px;margin-top:6px;border:1px solid rgba(74,144,226,.12);}
+    .content h3{border-bottom:2px solid var(--primary);padding-bottom:8px;color:var(--primary);}
+    .highlight{color:#2563EB;font-weight:700;}
+    ul{list-style:none;padding:0;}
+    li{padding:7px 0;border-bottom:1px solid rgba(0,0,0,.06);}
+    .perf-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:16px;}
+    .perf-card{background:#fff;border-radius:14px;padding:18px;text-align:center;box-shadow:0 3px 12px rgba(0,0,0,.08);transition:transform .25s;}
+    .perf-card:hover{transform:translateY(-4px);}
+    .perf-score{font-size:2rem;font-weight:900;margin:8px 0;}
+    .perf-label{font-size:12px;color:#666;font-weight:700;}
+    .perf-sub{font-size:11px;color:#999;margin-top:4px;}
+    .score-green{color:#16a34a;}.score-yellow{color:#ca8a04;}.score-red{color:#dc2626;}.score-gray{color:#94a3b8;}
+    .xp-bar-wrap{background:#E5E7EB;border-radius:999px;height:12px;margin:10px 0;overflow:hidden;}
+    .xp-bar{background:linear-gradient(90deg,#3B82F6,#8B5CF6);height:100%;border-radius:999px;transition:width .8s ease;}
+    #ai-tutor-page{text-align:left;}
+    .chat-wrapper{display:grid;grid-template-columns:1fr 2fr;gap:24px;align-items:start;max-width:1100px;margin:auto;}
+    .pdf-panel{background:#F8FAFF;border-radius:16px;padding:22px;border:2px dashed rgba(74,144,226,.35);position:sticky;top:20px;}
+    .pdf-panel h3{color:var(--ai-blue);text-align:center;font-size:1rem;font-weight:800;margin-bottom:14px;}
+    .upload-zone{border:2px dashed #93C5FD;border-radius:12px;padding:28px 16px;text-align:center;cursor:pointer;transition:all .25s;background:#fff;}
+    .upload-zone:hover{border-color:var(--ai-blue);background:#EFF6FF;}
+    .upload-zone input[type="file"]{display:none;}
+    .upload-zone .upload-icon{font-size:2.4rem;margin-bottom:8px;}
+    .upload-zone p{font-size:13px;color:#666;font-weight:600;}
+    .upload-progress{display:none;margin-top:14px;}
+    .progress-bar-wrap{background:#E5E7EB;border-radius:999px;height:8px;overflow:hidden;}
+    .progress-bar{background:linear-gradient(90deg,#3B82F6,#8B5CF6);width:0%;height:100%;border-radius:999px;transition:width .4s ease;}
+    .upload-status{font-size:13px;margin-top:8px;font-weight:600;color:#374151;}
+    .doc-info-box{display:none;background:#ECFDF5;border:1.5px solid #6EE7B7;border-radius:10px;padding:14px;margin-top:14px;font-size:13px;font-weight:600;}
+    .doc-name{color:#065F46;font-weight:800;margin-bottom:4px;}
+    .doc-meta{color:#047857;}
+    .cost-badge{display:none;background:linear-gradient(135deg,#FEF3C7,#FDE68A);border:1.5px solid #F59E0B;border-radius:10px;padding:12px;margin-top:12px;font-size:12px;font-weight:700;color:#92400E;text-align:center;}
+    .chat-panel{background:#F0F4FF;border-radius:16px;overflow:hidden;display:flex;flex-direction:column;height:580px;box-shadow:0 6px 24px rgba(0,0,0,.1);}
+    .chat-header{background:linear-gradient(135deg,#1d4ed8,#7c3aed);color:#fff;padding:16px 20px;display:flex;align-items:center;gap:12px;}
+    .ai-avatar{width:40px;height:40px;background:rgba(255,255,255,.25);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.4rem;}
+    .ai-name{font-weight:800;font-size:1rem;}
+    .ai-sub{font-size:12px;opacity:.8;}
+    .chat-messages{flex:1;overflow-y:auto;padding:20px 16px;display:flex;flex-direction:column;gap:14px;}
+    .chat-messages::-webkit-scrollbar{width:5px;}
+    .chat-messages::-webkit-scrollbar-thumb{background:#CBD5E1;border-radius:99px;}
+    .msg{display:flex;gap:10px;max-width:88%;animation:msgIn .3s ease;}
+    @keyframes msgIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    .msg.user{flex-direction:row-reverse;align-self:flex-end;}
+    .msg .bubble{padding:11px 15px;border-radius:16px;font-size:14px;line-height:1.6;font-weight:600;max-width:100%;}
+    .msg.ai .bubble{background:#fff;color:#1e293b;border-bottom-left-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,.08);}
+    .msg.user .bubble{background:linear-gradient(135deg,#2563EB,#7c3aed);color:#fff;border-bottom-right-radius:4px;}
+    .msg .avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
+    .msg.ai .avatar{background:#EEF2FF;}
+    .msg.user .avatar{background:linear-gradient(135deg,#2563EB,#7c3aed);color:#fff;}
+    .typing-indicator{display:flex;gap:5px;padding:12px 15px;background:#fff;border-radius:16px;width:fit-content;}
+    .typing-indicator span{width:8px;height:8px;background:#94A3B8;border-radius:50%;animation:bounce 1.2s infinite;}
+    .typing-indicator span:nth-child(2){animation-delay:.2s;}
+    .typing-indicator span:nth-child(3){animation-delay:.4s;}
+    @keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+    .chat-input-area{padding:14px 16px;background:#fff;border-top:1.5px solid #E2E8F0;display:flex;gap:10px;align-items:flex-end;}
+    .chat-input-area textarea{flex:1;border:1.5px solid #E2E8F0;border-radius:12px;padding:10px 14px;font-size:14px;font-family:'Nunito',sans-serif;resize:none;outline:none;max-height:100px;font-weight:600;color:#1e293b;transition:border .2s;}
+    .chat-input-area textarea:focus{border-color:var(--ai-blue);}
+    .send-btn{background:linear-gradient(135deg,#2563EB,#7c3aed);color:#fff;border:none;border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:1.2rem;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;}
+    .send-btn:hover{transform:scale(1.08);}
+    .send-btn:disabled{opacity:.5;cursor:default;transform:none;}
+    .mic-btn{background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;border:none;border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;}
+    .mic-btn:hover{transform:scale(1.08);}
+    .mic-btn.recording{background:linear-gradient(135deg,#dc2626,#ef4444);animation:pulse 1s infinite;}
+    .stop-btn{background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;border:none;border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;}
+    .stop-btn:hover{transform:scale(1.08);}
+    @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+    .cost-stat-pill{display:inline-block;background:#F0FDF4;border:1px solid #86EFAC;border-radius:999px;padding:4px 10px;font-size:11px;font-weight:700;color:#15803D;margin-top:6px;}
+    .cost-banner{background:linear-gradient(135deg,#1d4ed8,#7c3aed);color:#fff;border-radius:14px;padding:20px;margin-bottom:24px;display:flex;justify-content:space-around;flex-wrap:wrap;gap:14px;}
+    .cost-stat{text-align:center;}
+    .cost-stat .num{font-size:2rem;font-weight:900;}
+    .cost-stat .desc{font-size:12px;opacity:.85;font-weight:700;}
+    .module-tabs{display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;justify-content:center;}
+    .mod-tab{padding:10px 24px;border-radius:12px;border:2px solid var(--primary);background:#fff;color:var(--primary);font-weight:800;cursor:pointer;font-size:14px;transition:all .2s;font-family:'Nunito',sans-serif;}
+    .mod-tab.active{background:linear-gradient(45deg,var(--primary),var(--secondary));color:#fff;}
+    .module-section{display:none;}
+    .module-section.active{display:block;}
+    #solar-canvas{display:block;width:100%;height:520px;background:radial-gradient(ellipse at center,#0f0c29,#302b63,#24243e);border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.4);}
+    .solar-info{background:linear-gradient(135deg,#1e1b4b,#312e81);color:#fff;border-radius:12px;padding:18px;margin-top:16px;font-size:14px;line-height:1.8;font-weight:600;}
+    .solar-info h4{color:#a5b4fc;margin-bottom:8px;font-size:1rem;}
+    #gravity-canvas{display:block;width:100%;height:55vh;background:linear-gradient(to bottom,#87ceeb,#a8c0ff);cursor:pointer;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.18);}
+    .planet-labels{display:flex;justify-content:space-around;background:rgba(112,171,199,.9);border-radius:10px;padding:14px 0;margin-bottom:18px;box-shadow:0 3px 10px rgba(0,0,0,.1);}
+    .planet-label{text-align:center;width:calc(100%/5);}
+    .planet-label h3{margin:0;font-size:1rem;}
+    .planet-label p{margin:3px 0 0;font-size:12px;color:#555;font-weight:600;}
+    .anim-controls{display:flex;justify-content:center;gap:14px;margin-top:18px;flex-wrap:wrap;}
+    .grav-info{background:linear-gradient(135deg,#eff6ff,#eef2ff);border-radius:12px;padding:18px;margin-top:16px;font-size:14px;line-height:1.8;font-weight:600;color:#1e293b;border:1px solid #c7d2fe;}
+    .grav-info h4{color:var(--primary);margin-bottom:8px;}
+    .inline-quiz{background:#f0f9ff;border-radius:14px;padding:20px;margin-top:20px;border:2px solid #bae6fd;}
+    .inline-quiz h4{color:var(--ai-blue);margin-bottom:14px;font-size:1rem;font-weight:800;}
+    .q-card{background:#fff;border-radius:10px;padding:16px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.07);text-align:left;}
+    .q-text{font-weight:800;margin-bottom:12px;color:#1e293b;font-size:15px;}
+    .opt-list{display:flex;flex-direction:column;gap:8px;}
+    .opt-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#f8fafc;border-radius:8px;cursor:pointer;transition:all .2s;}
+    .opt-item:hover{background:#e0f2fe;}
+    .opt-item input{width:16px;height:16px;cursor:pointer;flex-shrink:0;}
+    .opt-item label{cursor:pointer;font-weight:600;color:#374151;font-size:14px;}
+    .q-result{margin-top:8px;font-size:13px;font-weight:700;display:none;}
+    .quiz-container{max-width:820px;margin:auto;}
+    .quiz-header{background:linear-gradient(45deg,var(--primary),var(--secondary));color:#fff;padding:22px;border-radius:14px;margin-bottom:24px;}
+    .quiz-mod-tabs{display:flex;gap:10px;justify-content:center;margin-bottom:22px;flex-wrap:wrap;}
+    .quiz-mod-tab{padding:9px 22px;border-radius:999px;border:2px solid var(--primary);background:#fff;color:var(--primary);font-weight:700;cursor:pointer;font-size:14px;transition:all .2s;font-family:'Nunito',sans-serif;}
+    .quiz-mod-tab.active{background:var(--primary);color:#fff;}
+    .quiz-mod-section{display:none;}
+    .quiz-mod-section.active{display:block;}
+    .question-card{background:lightskyblue;border-radius:14px;padding:22px;margin-bottom:22px;box-shadow:0 4px 14px rgba(0,0,0,.08);text-align:left;transition:transform .25s;}
+    .question-card:hover{transform:translateY(-2px);}
+    .question-text{font-weight:800;margin-bottom:16px;color:#2c3e50;font-size:17px;}
+    .options-list{display:flex;flex-direction:column;gap:12px;}
+    .option-item{display:flex;align-items:center;padding:12px 15px;background:#f8f9fa;border-radius:10px;transition:all .2s;cursor:pointer;}
+    .option-item:hover{background:lightcyan;transform:translateX(4px);}
+    .option-item input{margin-right:12px;width:18px;height:18px;cursor:pointer;flex-shrink:0;}
+    .option-item label{cursor:pointer;font-weight:600;color:#495057;flex-grow:1;}
+    .quiz-controls{display:flex;justify-content:space-between;margin-top:36px;}
+    .results-container{background:lightskyblue;border-radius:14px;padding:28px;margin-top:36px;box-shadow:0 4px 14px rgba(0,0,0,.08);}
+    .score-display{font-size:26px;font-weight:800;margin-bottom:22px;color:#2c3e50;}
+    .correct-answer{color:var(--success);font-weight:700;}
+    .incorrect-answer{color:var(--danger);font-weight:700;}
+    .review-item{margin-bottom:18px;padding-bottom:18px;border-bottom:1px solid #7dc5e0;}
+    @media(max-width:768px){.chat-wrapper{grid-template-columns:1fr;}.chat-panel{height:480px;}.perf-grid{grid-template-columns:1fr 1fr;}.options-container{flex-direction:column;align-items:center;}.btn{min-width:unset;width:100%;}.quiz-controls{flex-direction:column;gap:12px;}.planet-labels{flex-wrap:wrap;gap:8px;}.planet-label{width:calc(50% - 8px);}}
+  </style>
+</head>
+<body>
+
+<!-- HOME -->
+<div id="home" class="page active">
+  <h1>UDAAN ✈</h1>
+  <h2 style="font-size:1.2rem;color:#555;margin-bottom:6px;">wings to learn — AI-powered tutoring for rural India</h2>
+  <div style="display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin-bottom:24px;margin-top:10px;">
+    <span style="background:#EEF2FF;color:#4338CA;border-radius:999px;padding:5px 14px;font-size:12px;font-weight:800;border:1.5px solid #C7D2FE;">⚡ Context Pruning</span>
+    <span style="background:#F0FDF4;color:#15803D;border-radius:999px;padding:5px 14px;font-size:12px;font-weight:800;border:1.5px solid #86EFAC;">💰 ~95% Cost Reduction</span>
+    <span style="background:#FFF7ED;color:#C2410C;border-radius:999px;padding:5px 14px;font-size:12px;font-weight:800;border:1.5px solid #FED7AA;">🇮🇳 Built for Rural India</span>
+    <span style="background:#EFF6FF;color:#1D4ED8;border-radius:999px;padding:5px 14px;font-size:12px;font-weight:800;border:1.5px solid #BFDBFE;">📚 NCERT Curriculum Aligned</span>
+  </div>
+  <button class="btn" id="student-btn">🎓 Student</button>
+  <button class="btn btn-secondary" id="teacher-btn">👩‍🏫 Teacher</button>
+</div>
+
+<!-- SIGNUP -->
+<div id="signup" class="page">
+  <h2>Create Your Account</h2>
+  <form id="signup-form" style="max-width:440px;margin:auto;text-align:left;">
+    <input type="text" id="name" placeholder="Full Name" required/>
+    <div id="name-error" class="error"></div>
+    <input type="text" id="contact" placeholder="Email or Phone Number" required/>
+    <div id="contact-error" class="error"></div>
+    <input type="password" id="password" placeholder="Password" required/>
+    <div id="password-error" class="error"></div>
+    <div style="text-align:center;margin-top:8px;">
+      <button type="submit" class="btn" id="signup-btn">Sign Up</button>
+    </div>
+  </form>
+</div>
+
+<!-- OPTIONS -->
+<div id="post-signup-options" class="page">
+  <h2>Welcome aboard! 🎉</h2>
+  <p style="color:#666;margin-bottom:8px;">What would you like to do?</p>
+  <div class="options-container">
+    <div class="option-card" id="student-details-btn"><div class="icon">👤</div><div class="label">Student Dashboard</div></div>
+    <div class="option-card" id="ai-tutor-btn"><div class="icon">🤖</div><div class="label">AI Tutor Chat</div></div>
+    <div class="option-card" id="learning-modules-btn"><div class="icon">🎓</div><div class="label">Learning Modules</div></div>
+    <div class="option-card" id="quiz-time-btn"><div class="icon">📝</div><div class="label">Quiz Time</div></div>
+    <div class="option-card" id="go-to-home-btn"><div class="icon">🏠</div><div class="label">Go to Home</div></div>
+  </div>
+</div>
+
+<!-- STUDENT DASHBOARD -->
+<div id="student-dashboard" class="page">
+  <button class="back-btn" onclick="showPage(postSignupOptionsPage)">← Back</button>
+  <div class="dashboard">
+    <div class="menu-btn" onclick="toggleContent('details')"><span>👤</span> Student Profile</div>
+    <div class="content" id="details">
+      <h3>Student Profile</h3>
+      <p><strong>Name:</strong> <span class="highlight" id="display-name">—</span></p>
+      <p><strong>Contact:</strong> <span class="highlight" id="display-contact">—</span></p>
+      <p><strong>School:</strong> State Board School, Rural India</p>
+      <p><strong>Level:</strong> 🥇 <span id="display-level">Level 1 – Beginner</span></p>
+      <p style="margin-top:10px;"><strong>XP:</strong> <span id="display-xp">0</span> / 1000</p>
+      <div class="xp-bar-wrap"><div class="xp-bar" id="xp-bar" style="width:0%"></div></div>
+    </div>
+
+    <div class="menu-btn" onclick="toggleContent('performance')"><span>📊</span> Performance Tracker</div>
+    <div class="content" id="performance">
+      <h3>Performance Tracker</h3>
+      <div class="perf-grid">
+        <div class="perf-card"><div class="perf-label">⚡ Gravitation Quiz</div><div class="perf-score score-gray" id="perf-grav">—</div><div class="perf-sub" id="perf-grav-sub">Not attempted</div></div>
+        <div class="perf-card"><div class="perf-label">🌌 Solar System Quiz</div><div class="perf-score score-gray" id="perf-solar">—</div><div class="perf-sub" id="perf-solar-sub">Not attempted</div></div>
+        <div class="perf-card"><div class="perf-label">🏆 Overall Average</div><div class="perf-score score-gray" id="perf-overall">—</div><div class="perf-sub" id="perf-overall-sub">Complete quizzes to see</div></div>
+        <div class="perf-card"><div class="perf-label">💬 AI Questions Asked</div><div class="perf-score score-green" id="perf-questions">0</div><div class="perf-sub">Total queries to AI Tutor</div></div>
+        <div class="perf-card"><div class="perf-label">💰 Tokens Saved</div><div class="perf-score score-green" id="perf-tokens">0</div><div class="perf-sub">vs naive RAG approach</div></div>
+        <div class="perf-card"><div class="perf-label">🔥 Learning Streak</div><div class="perf-score score-yellow" id="perf-streak">1</div><div class="perf-sub">Days active on UDAAN</div></div>
+      </div>
+    </div>
+
+    <div class="menu-btn" onclick="toggleContent('achievements')"><span>🏆</span> Achievements</div>
+    <div class="content" id="achievements">
+      <h3>Achievements</h3>
+      <ul id="achievement-list"><li>🚀 Joined UDAAN Platform</li></ul>
+    </div>
+
+    <div class="menu-btn" onclick="toggleContent('topics')"><span>📚</span> Topics Covered</div>
+    <div class="content" id="topics">
+      <h3>Topics Covered</h3>
+      <ul id="topics-list"><li style="color:#94a3b8;">No topics completed yet — take a quiz to get started!</li></ul>
+    </div>
+
+    <div class="menu-btn" onclick="toggleContent('logout')"><span>🚪</span> Logout</div>
+    <div class="content" id="logout">
+      <h3>Logout</h3>
+      <p>Are you sure you want to logout?</p>
+      <button class="btn btn-danger" onclick="showPage(homePage)" style="margin-top:14px;">Yes, Logout</button>
+    </div>
+  </div>
+</div>
+
+<!-- AI TUTOR -->
+<div id="ai-tutor-page" class="page">
+  <button class="back-btn" onclick="showPage(postSignupOptionsPage)">← Back</button>
+
+  <!-- Fix D: Rural India badge + Fix B: Baseline RAG comparison banner -->
+  <div style="max-width:1100px;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;">
+    <span style="background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;border-radius:999px;padding:6px 16px;font-size:13px;font-weight:800;">🇮🇳 Built for Rural India — Low Bandwidth Optimized</span>
+    <span style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;border-radius:999px;padding:6px 16px;font-size:13px;font-weight:800;">📚 NCERT / State Board Curriculum Aligned</span>
+    <span style="background:linear-gradient(135deg,#0369a1,#0284c7);color:#fff;border-radius:999px;padding:6px 16px;font-size:13px;font-weight:800;">🧠 Personalized AI Responses</span>
+  </div>
+
+  <!-- Fix B: Baseline RAG vs UDAAN visual comparison -->
+  <div style="max-width:1100px;margin:0 auto 16px;display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;">
+    <div style="background:#FEF2F2;border:2px solid #FECACA;border-radius:14px;padding:16px;text-align:center;">
+      <div style="font-size:1.1rem;font-weight:900;color:#DC2626;margin-bottom:8px;">❌ Naive RAG (Baseline)</div>
+      <div style="font-size:13px;font-weight:700;color:#7F1D1D;line-height:1.8;">
+        Sends <strong>FULL PDF</strong> every query<br>
+        ~50,000 tokens per question<br>
+        High cost · High latency<br>
+        ❌ Unusable in rural India
+      </div>
+    </div>
+    <div style="font-size:2rem;text-align:center;">⚡</div>
+    <div style="background:#F0FDF4;border:2px solid #86EFAC;border-radius:14px;padding:16px;text-align:center;">
+      <div style="font-size:1.1rem;font-weight:900;color:#16a34a;margin-bottom:8px;">✅ UDAAN (Our System)</div>
+      <div style="font-size:13px;font-weight:700;color:#14532D;line-height:1.8;">
+        Sends only <strong>Top 4 chunks</strong><br>
+        ~1,500 tokens per question<br>
+        <strong>~95% cheaper</strong> · Low latency<br>
+        ✅ Works on slow internet!
+      </div>
+    </div>
+  </div>
+
+  <div class="cost-banner" style="max-width:1100px;margin:0 auto 20px;">
+    <div class="cost-stat"><div class="num">~95%</div><div class="desc">Cost Reduction vs Naive RAG</div></div>
+    <div class="cost-stat"><div class="num">Top 4</div><div class="desc">Chunks Sent (not full PDF)</div></div>
+    <div class="cost-stat"><div class="num">⚡</div><div class="desc">Scaledown Context Pruning</div></div>
+    <div class="cost-stat"><div class="num">🗄️</div><div class="desc">Response Caching (0 tokens)</div></div>
+  </div>
+
+  <h2 style="text-align:center;margin-bottom:22px;">🤖 AI Tutor — Chat with your Textbook</h2>
+  <div class="chat-wrapper">
+    <div class="pdf-panel">
+      <h3>📚 Upload Textbook PDF</h3>
+      <!-- Fix D: Rural India note -->
+      <div style="background:#F0FDF4;border:1px solid #86EFAC;border-radius:8px;padding:8px 10px;margin-bottom:12px;font-size:11px;font-weight:700;color:#15803D;text-align:center;">
+        🌐 Works on 2G/3G — minimal data usage!
+      </div>
+      <div class="upload-zone" id="upload-zone" onclick="document.getElementById('pdf-file-input').click()">
+        <input type="file" id="pdf-file-input" accept=".pdf">
+        <div class="upload-icon">📄</div>
+        <p><strong>Click to upload PDF</strong></p>
+        <p style="font-size:11px;margin-top:4px;">NCERT / State Board textbooks supported</p>
+      </div>
+      <div class="upload-progress" id="upload-progress">
+        <div class="progress-bar-wrap"><div class="progress-bar" id="progress-bar"></div></div>
+        <div class="upload-status" id="upload-status">Uploading…</div>
+      </div>
+      <div class="doc-info-box" id="doc-info-box">
+        <div class="doc-name" id="doc-name">—</div>
+        <div class="doc-meta" id="doc-meta">—</div>
+      </div>
+      <div class="cost-badge" id="cost-badge">⚡ Context Pruning Active<br><span id="cost-detail">Sending only relevant chunks to AI</span></div>
+      <div style="margin-top:16px;font-size:12px;color:#888;text-align:center;font-weight:600;">💡 Upload PDF → Ask questions in chat!</div>
+    </div>
+    <div class="chat-panel">
+      <div class="chat-header">
+        <div class="ai-avatar">🤖</div>
+        <div>
+          <div class="ai-name">UDAAN AI Tutor</div>
+          <!-- Fix C: Personalization shown in header -->
+          <div class="ai-sub">Personalized · Curriculum-aligned · Low cost · Rural India ready</div>
+        </div>
+      </div>
+      <div class="chat-messages" id="chat-messages">
+        <div class="msg ai"><div class="avatar">🤖</div><div class="bubble">👋 Namaste! I'm your UDAAN AI Tutor — built for <strong>rural Indian students</strong> like you! 🇮🇳<br><br>Upload your <strong>NCERT or State Board textbook PDF</strong> on the left, then ask me anything. I give <strong>curriculum-aligned, personalized answers</strong> using only the most relevant parts of your textbook — saving up to 95% in AI costs! 📚⚡</div></div>
+      </div>
+      <div class="chat-input-area">
+        <textarea id="chat-input" placeholder="Ask a question about your textbook…" rows="1"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage();}"></textarea>
+        <button class="mic-btn" id="mic-btn" onclick="toggleVoice()" title="Voice Input">🎤</button>
+        <button class="stop-btn" id="stop-btn" onclick="stopSpeaking()" title="Stop Voice" style="display:none;">🔇</button>
+        <button class="send-btn" id="send-btn" onclick="sendMessage()">➤</button>
+      </div>
+      <div id="voice-status" style="display:none;text-align:center;padding:6px;font-size:12px;font-weight:700;color:#7c3aed;background:#EEF2FF;border-radius:8px;margin:0 16px 10px;">
+        🎤 Listening... speak now!
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LEARNING MODULES -->
+<div id="learning-modules-page" class="page">
+  <button class="back-btn" onclick="showPage(postSignupOptionsPage)">← Back</button>
+  <h2>🎓 Learning Modules</h2>
+  <p style="color:#666;margin-bottom:22px;">Choose a module to learn with animation + quick quiz</p>
+  <div class="module-tabs">
+    <button class="mod-tab active" onclick="switchModule('gravitation',this)">⚡ Gravitation</button>
+    <button class="mod-tab" onclick="switchModule('solar',this)">🌌 Solar System</button>
+  </div>
+
+  <!-- GRAVITATION MODULE -->
+  <div class="module-section active" id="mod-gravitation">
+    <div class="planet-labels">
+      <div class="planet-label"><h3>Earth 🌍</h3><p>g = 9.8 m/s²</p></div>
+      <div class="planet-label"><h3>Moon 🌝</h3><p>g = 1.62 m/s²</p></div>
+      <div class="planet-label"><h3>Jupiter 🪐</h3><p>g = 24.79 m/s²</p></div>
+      <div class="planet-label"><h3>Sun ☀️</h3><p>g = 274 m/s²</p></div>
+      <div class="planet-label"><h3>Venus 🌑</h3><p>g = 8.87 m/s²</p></div>
+    </div>
+    <canvas id="gravity-canvas" width="700" height="400"></canvas>
+    <div class="anim-controls">
+      <button class="btn" id="start-animation-btn">▶ Start Animation</button>
+      <button class="btn btn-warning" id="reset-animation-btn">↺ Reset</button>
+    </div>
+    <div class="grav-info">
+      <h4>📖 What does this show?</h4>
+      Each ball is dropped simultaneously on 5 different celestial bodies. The ball on the <strong>Sun</strong> hits the ground first because the Sun has the strongest gravitational pull (274 m/s²). The <strong>Moon</strong> ball lands last with just 1.62 m/s². This visually demonstrates Newton's Law of Universal Gravitation — the greater the mass, the stronger the gravity.
+    </div>
+    <div class="inline-quiz">
+      <h4>⚡ Quick Check — Gravitation</h4>
+      <div class="q-card">
+        <div class="q-text">Q1. Which planet has the highest surface gravity?</div>
+        <div class="opt-list">
+          <div class="opt-item"><input type="radio" name="gq1" value="A" id="gq1a"><label for="gq1a">A) Earth</label></div>
+          <div class="opt-item"><input type="radio" name="gq1" value="B" id="gq1b"><label for="gq1b">B) Moon</label></div>
+          <div class="opt-item"><input type="radio" name="gq1" value="C" id="gq1c"><label for="gq1c">C) Sun</label></div>
+          <div class="opt-item"><input type="radio" name="gq1" value="D" id="gq1d"><label for="gq1d">D) Jupiter</label></div>
+        </div>
+        <div class="q-result" id="gq1-result"></div>
+      </div>
+      <div class="q-card">
+        <div class="q-text">Q2. What is the gravitational acceleration on Earth?</div>
+        <div class="opt-list">
+          <div class="opt-item"><input type="radio" name="gq2" value="A" id="gq2a"><label for="gq2a">A) 1.62 m/s²</label></div>
+          <div class="opt-item"><input type="radio" name="gq2" value="B" id="gq2b"><label for="gq2b">B) 9.8 m/s²</label></div>
+          <div class="opt-item"><input type="radio" name="gq2" value="C" id="gq2c"><label for="gq2c">C) 24.79 m/s²</label></div>
+          <div class="opt-item"><input type="radio" name="gq2" value="D" id="gq2d"><label for="gq2d">D) 274 m/s²</label></div>
+        </div>
+        <div class="q-result" id="gq2-result"></div>
+      </div>
+      <button class="btn btn-success" onclick="checkInlineQuiz('grav')" style="margin-top:10px;min-width:unset;">✓ Check Answers</button>
+      <div id="grav-inline-score" style="margin-top:12px;font-weight:800;font-size:16px;"></div>
+    </div>
+  </div>
+
+  <!-- SOLAR SYSTEM MODULE -->
+  <div class="module-section" id="mod-solar">
+    <canvas id="solar-canvas" width="800" height="520"></canvas>
+    <div class="anim-controls">
+      <button class="btn" id="solar-speed-btn" onclick="toggleSolarSpeed()">⚡ Speed Up</button>
+      <button class="btn btn-warning" onclick="resetSolar()">↺ Reset</button>
+    </div>
+    <div class="solar-info">
+      <h4>🌌 The Solar System</h4>
+      Our Solar System has the <strong>Sun</strong> at the center and <strong>8 planets</strong> orbiting due to gravitational force. Planets closer to the Sun (Mercury, Venus) orbit faster due to stronger gravity. Distant planets like Neptune take much longer — 165 Earth years! All orbits are elliptical as described by <strong>Kepler's Laws of Planetary Motion</strong>.
+    </div>
+    <div class="inline-quiz">
+      <h4>🌌 Quick Check — Solar System</h4>
+      <div class="q-card">
+        <div class="q-text">Q1. Which planet is closest to the Sun?</div>
+        <div class="opt-list">
+          <div class="opt-item"><input type="radio" name="sq1" value="A" id="sq1a"><label for="sq1a">A) Venus</label></div>
+          <div class="opt-item"><input type="radio" name="sq1" value="B" id="sq1b"><label for="sq1b">B) Earth</label></div>
+          <div class="opt-item"><input type="radio" name="sq1" value="C" id="sq1c"><label for="sq1c">C) Mercury</label></div>
+          <div class="opt-item"><input type="radio" name="sq1" value="D" id="sq1d"><label for="sq1d">D) Mars</label></div>
+        </div>
+        <div class="q-result" id="sq1-result"></div>
+      </div>
+      <div class="q-card">
+        <div class="q-text">Q2. What keeps planets in orbit around the Sun?</div>
+        <div class="opt-list">
+          <div class="opt-item"><input type="radio" name="sq2" value="A" id="sq2a"><label for="sq2a">A) Magnetic force</label></div>
+          <div class="opt-item"><input type="radio" name="sq2" value="B" id="sq2b"><label for="sq2b">B) Gravitational force</label></div>
+          <div class="opt-item"><input type="radio" name="sq2" value="C" id="sq2c"><label for="sq2c">C) Electric force</label></div>
+          <div class="opt-item"><input type="radio" name="sq2" value="D" id="sq2d"><label for="sq2d">D) Nuclear force</label></div>
+        </div>
+        <div class="q-result" id="sq2-result"></div>
+      </div>
+      <button class="btn btn-success" onclick="checkInlineQuiz('solar')" style="margin-top:10px;min-width:unset;">✓ Check Answers</button>
+      <div id="solar-inline-score" style="margin-top:12px;font-weight:800;font-size:16px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- QUIZ TIME -->
+<div id="quiz-time" class="page">
+  <div class="quiz-container">
+    <div class="quiz-header"><h2>Quiz Time 📝</h2><p>Select a module and test your knowledge!</p></div>
+    <div class="quiz-mod-tabs">
+      <button class="quiz-mod-tab active" onclick="switchQuizMod('qgrav',this)">⚡ Gravitation</button>
+      <button class="quiz-mod-tab" onclick="switchQuizMod('qsolar',this)">🌌 Solar System</button>
+    </div>
+
+    <!-- GRAVITATION QUIZ -->
+    <div class="quiz-mod-section active" id="qgrav">
+      <form id="grav-quiz-form">
+        <div class="question-card"><div class="question-text">1. Which celestial body has the strongest gravitational force?</div><div class="options-list"><div class="option-item"><input type="radio" id="g1a" name="g1" value="A"><label for="g1a">A) Earth</label></div><div class="option-item"><input type="radio" id="g1b" name="g1" value="B"><label for="g1b">B) Jupiter</label></div><div class="option-item"><input type="radio" id="g1c" name="g1" value="C"><label for="g1c">C) Sun</label></div><div class="option-item"><input type="radio" id="g1d" name="g1" value="D"><label for="g1d">D) Moon</label></div></div></div>
+        <div class="question-card"><div class="question-text">2. On which body would you weigh the least?</div><div class="options-list"><div class="option-item"><input type="radio" id="g2a" name="g2" value="A"><label for="g2a">A) Jupiter</label></div><div class="option-item"><input type="radio" id="g2b" name="g2" value="B"><label for="g2b">B) Earth</label></div><div class="option-item"><input type="radio" id="g2c" name="g2" value="C"><label for="g2c">C) Moon</label></div><div class="option-item"><input type="radio" id="g2d" name="g2" value="D"><label for="g2d">D) Venus</label></div></div></div>
+        <div class="question-card"><div class="question-text">3. How does gravity affect time? (Einstein's Relativity)</div><div class="options-list"><div class="option-item"><input type="radio" id="g3a" name="g3" value="A"><label for="g3a">A) Time runs faster in stronger gravity</label></div><div class="option-item"><input type="radio" id="g3b" name="g3" value="B"><label for="g3b">B) Time runs slower in stronger gravity</label></div><div class="option-item"><input type="radio" id="g3c" name="g3" value="C"><label for="g3c">C) No effect on time</label></div><div class="option-item"><input type="radio" id="g3d" name="g3" value="D"><label for="g3d">D) Stops time completely</label></div></div></div>
+        <div class="question-card"><div class="question-text">4. Gravity on Mars compared to Earth is approximately?</div><div class="options-list"><div class="option-item"><input type="radio" id="g4a" name="g4" value="A"><label for="g4a">A) 1/3 of Earth's gravity</label></div><div class="option-item"><input type="radio" id="g4b" name="g4" value="B"><label for="g4b">B) 1/2 of Earth's gravity</label></div><div class="option-item"><input type="radio" id="g4c" name="g4" value="C"><label for="g4c">C) Same as Earth</label></div><div class="option-item"><input type="radio" id="g4d" name="g4" value="D"><label for="g4d">D) 2× Earth's gravity</label></div></div></div>
+        <div class="question-card"><div class="question-text">5. Which factor primarily determines a planet's gravity?</div><div class="options-list"><div class="option-item"><input type="radio" id="g5a" name="g5" value="A"><label for="g5a">A) Distance from the Sun</label></div><div class="option-item"><input type="radio" id="g5b" name="g5" value="B"><label for="g5b">B) Its magnetic field</label></div><div class="option-item"><input type="radio" id="g5c" name="g5" value="C"><label for="g5c">C) Its mass and size</label></div><div class="option-item"><input type="radio" id="g5d" name="g5" value="D"><label for="g5d">D) Atmospheric composition</label></div></div></div>
+        <div class="quiz-controls"><button type="button" class="btn btn-secondary" onclick="showPage(postSignupOptionsPage)">Back</button><button type="submit" class="btn btn-success">Submit Answers</button></div>
+      </form>
+      <div id="grav-quiz-results" class="results-container" style="display:none;">
+        <h3>Gravitation Quiz Results ⚡</h3>
+        <div class="score-display">Score: <span id="grav-score-value">0</span>/5</div>
+        <div id="grav-results-breakdown"></div>
+        <button class="btn" onclick="resetQuiz('grav')">Try Again</button>
+      </div>
+    </div>
+
+    <!-- SOLAR SYSTEM QUIZ -->
+    <div class="quiz-mod-section" id="qsolar">
+      <form id="solar-quiz-form">
+        <div class="question-card"><div class="question-text">1. How many planets are in our Solar System?</div><div class="options-list"><div class="option-item"><input type="radio" id="s1a" name="s1" value="A"><label for="s1a">A) 7</label></div><div class="option-item"><input type="radio" id="s1b" name="s1" value="B"><label for="s1b">B) 8</label></div><div class="option-item"><input type="radio" id="s1c" name="s1" value="C"><label for="s1c">C) 9</label></div><div class="option-item"><input type="radio" id="s1d" name="s1" value="D"><label for="s1d">D) 10</label></div></div></div>
+        <div class="question-card"><div class="question-text">2. Which is the largest planet in the Solar System?</div><div class="options-list"><div class="option-item"><input type="radio" id="s2a" name="s2" value="A"><label for="s2a">A) Saturn</label></div><div class="option-item"><input type="radio" id="s2b" name="s2" value="B"><label for="s2b">B) Neptune</label></div><div class="option-item"><input type="radio" id="s2c" name="s2" value="C"><label for="s2c">C) Jupiter</label></div><div class="option-item"><input type="radio" id="s2d" name="s2" value="D"><label for="s2d">D) Uranus</label></div></div></div>
+        <div class="question-card"><div class="question-text">3. Which planet is known as the Red Planet?</div><div class="options-list"><div class="option-item"><input type="radio" id="s3a" name="s3" value="A"><label for="s3a">A) Venus</label></div><div class="option-item"><input type="radio" id="s3b" name="s3" value="B"><label for="s3b">B) Mars</label></div><div class="option-item"><input type="radio" id="s3c" name="s3" value="C"><label for="s3c">C) Mercury</label></div><div class="option-item"><input type="radio" id="s3d" name="s3" value="D"><label for="s3d">D) Jupiter</label></div></div></div>
+        <div class="question-card"><div class="question-text">4. What keeps planets in orbit around the Sun?</div><div class="options-list"><div class="option-item"><input type="radio" id="s4a" name="s4" value="A"><label for="s4a">A) Magnetic force</label></div><div class="option-item"><input type="radio" id="s4b" name="s4" value="B"><label for="s4b">B) Gravitational force</label></div><div class="option-item"><input type="radio" id="s4c" name="s4" value="C"><label for="s4c">C) Electric force</label></div><div class="option-item"><input type="radio" id="s4d" name="s4" value="D"><label for="s4d">D) Nuclear force</label></div></div></div>
+        <div class="question-card"><div class="question-text">5. Which planet takes the longest to orbit the Sun?</div><div class="options-list"><div class="option-item"><input type="radio" id="s5a" name="s5" value="A"><label for="s5a">A) Saturn</label></div><div class="option-item"><input type="radio" id="s5b" name="s5" value="B"><label for="s5b">B) Uranus</label></div><div class="option-item"><input type="radio" id="s5c" name="s5" value="C"><label for="s5c">C) Jupiter</label></div><div class="option-item"><input type="radio" id="s5d" name="s5" value="D"><label for="s5d">D) Neptune</label></div></div></div>
+        <div class="quiz-controls"><button type="button" class="btn btn-secondary" onclick="showPage(postSignupOptionsPage)">Back</button><button type="submit" class="btn btn-success">Submit Answers</button></div>
+      </form>
+      <div id="solar-quiz-results" class="results-container" style="display:none;">
+        <h3>Solar System Quiz Results 🌌</h3>
+        <div class="score-display">Score: <span id="solar-score-value">0</span>/5</div>
+        <div id="solar-results-breakdown"></div>
+        <button class="btn" onclick="resetQuiz('solar')">Try Again</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const BACKEND_URL="http://localhost:8000";
+const homePage=document.getElementById('home'),signupPage=document.getElementById('signup'),postSignupOptionsPage=document.getElementById('post-signup-options'),studentDashboardPage=document.getElementById('student-dashboard'),aiTutorPage=document.getElementById('ai-tutor-page'),learningModulesPage=document.getElementById('learning-modules-page'),quizTimePage=document.getElementById('quiz-time');
+
+let studentData={name:'',contact:'',questionsAsked:0,tokensSaved:0,gravQuizScore:null,solarQuizScore:null,achievements:['🚀 Joined UDAAN Platform'],topicsCovered:[],xp:0};
+let running=false,animationId,balls=[],solarRunning=false,solarAnimId,solarSpeed=1,planetAngles=[],isWaitingForAI=false,currentDocId=null,currentDocName=null;
+
+function showPage(page){
+  if(running){running=false;cancelAnimationFrame(animationId);}
+  if(solarRunning){solarRunning=false;cancelAnimationFrame(solarAnimId);}
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  page.classList.add('active');window.scrollTo(0,0);
+}
+
+document.getElementById('student-btn').addEventListener('click',()=>showPage(signupPage));
+document.getElementById('teacher-btn').addEventListener('click',()=>showPage(signupPage));
+document.getElementById('go-to-home-btn').addEventListener('click',()=>showPage(homePage));
+document.getElementById('quiz-time-btn').addEventListener('click',()=>showPage(quizTimePage));
+document.getElementById('ai-tutor-btn').addEventListener('click',()=>showPage(aiTutorPage));
+document.getElementById('learning-modules-btn').addEventListener('click',()=>{showPage(learningModulesPage);initGravity();startSolar();});
+document.getElementById('student-details-btn').addEventListener('click',()=>{refreshDashboard();showPage(studentDashboardPage);});
+
+// Signup
+function displayError(id,msg){document.getElementById(id).innerText=msg;}
+function resetErrors(){['name-error','contact-error','password-error'].forEach(id=>document.getElementById(id).innerText='');}
+document.getElementById('signup-form').addEventListener('submit',(e)=>{
+  e.preventDefault();let ok=true;resetErrors();
+  const n=document.getElementById('name'),c=document.getElementById('contact'),p=document.getElementById('password');
+  if(!n.value.trim()){displayError('name-error','Name is required.');ok=false;}
+  if(!c.value.trim()){displayError('contact-error','Email or Phone required.');ok=false;}
+  else if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.value.trim())&&!/^[0-9]{10}$/.test(c.value.trim())){displayError('contact-error','Enter valid Email or 10-digit Phone.');ok=false;}
+  if(!p.value.trim()){displayError('password-error','Password is required.');ok=false;}
+  if(ok){studentData.name=n.value.trim();studentData.contact=c.value.trim();const btn=document.getElementById('signup-btn');btn.classList.add('loading');setTimeout(()=>{btn.classList.remove('loading');showPage(postSignupOptionsPage);},900);}
+});
+
+// Dashboard
+function getScoreColor(s,t){const p=s/t;return p>=0.8?'score-green':p>=0.5?'score-yellow':'score-red';}
+function refreshDashboard(){
+  document.getElementById('display-name').textContent=studentData.name||'—';
+  document.getElementById('display-contact').textContent=studentData.contact||'—';
+  const xp=studentData.xp;
+  let level='Level 1 – Beginner';
+  if(xp>=800)level='Level 5 – Knowledge Explorer';
+  else if(xp>=600)level='Level 4 – Advanced Learner';
+  else if(xp>=400)level='Level 3 – Intermediate';
+  else if(xp>=200)level='Level 2 – Rising Star';
+  document.getElementById('display-level').textContent=level;
+  document.getElementById('display-xp').textContent=xp;
+  document.getElementById('xp-bar').style.width=Math.min(xp/10,100)+'%';
+  if(studentData.gravQuizScore!==null){const sc=studentData.gravQuizScore,el=document.getElementById('perf-grav');el.textContent=sc+'/5';el.className='perf-score '+getScoreColor(sc,5);document.getElementById('perf-grav-sub').textContent=sc>=4?'🌟 Excellent!':sc>=3?'👍 Good':'📖 Keep practicing';}
+  if(studentData.solarQuizScore!==null){const sc=studentData.solarQuizScore,el=document.getElementById('perf-solar');el.textContent=sc+'/5';el.className='perf-score '+getScoreColor(sc,5);document.getElementById('perf-solar-sub').textContent=sc>=4?'🌟 Excellent!':sc>=3?'👍 Good':'📖 Keep practicing';}
+  const attempts=[studentData.gravQuizScore,studentData.solarQuizScore].filter(s=>s!==null);
+  if(attempts.length>0){const avg=Math.round(attempts.reduce((a,b)=>a+b,0)/attempts.length),el=document.getElementById('perf-overall');el.textContent=avg+'/5 avg';el.className='perf-score '+getScoreColor(avg,5);document.getElementById('perf-overall-sub').textContent=attempts.length+'/2 modules completed';}
+  document.getElementById('perf-questions').textContent=studentData.questionsAsked;
+  document.getElementById('perf-tokens').textContent=studentData.tokensSaved.toLocaleString();
+  document.getElementById('achievement-list').innerHTML=studentData.achievements.map(a=>`<li>${a}</li>`).join('');
+  const tl=document.getElementById('topics-list');
+  if(studentData.topicsCovered.length===0){
+    tl.innerHTML='<li style="color:#94a3b8;border:none;">No topics completed yet — take a quiz to get started!</li>';
+  }else{
+    tl.innerHTML=studentData.topicsCovered.map(t=>`<li>✅ ${t}</li>`).join('');
+  }
+}
+function toggleContent(id){const sec=document.getElementById(id),vis=sec.style.display==='block';document.querySelectorAll('.content').forEach(s=>s.style.display='none');if(!vis)sec.style.display='block';}
+function addAchievement(t){if(!studentData.achievements.includes(t))studentData.achievements.push(t);}
+function addTopic(t){if(!studentData.topicsCovered.includes(t))studentData.topicsCovered.push(t);}
+
+// Gravitation Quiz
+const gravA={g1:'C',g2:'C',g3:'B',g4:'A',g5:'C'};
+const gravQ={g1:'Which celestial body has the strongest gravitational force?',g2:'On which body would you weigh the least?',g3:"How does gravity affect time? (Einstein's Relativity)",g4:'Gravity on Mars compared to Earth is approximately?',g5:"Which factor primarily determines a planet's gravity?"};
+document.getElementById('grav-quiz-form').addEventListener('submit',(e)=>{
+  e.preventDefault();let score=0,html='';
+  for(let i=1;i<=5;i++){const sel=document.querySelector(`input[name="g${i}"]:checked`),ans=sel?sel.value:'Not answered',ok=ans===gravA['g'+i];if(ok)score++;html+=`<div class="review-item"><p><strong>Q${i}:</strong> ${gravQ['g'+i]}</p><p class="${ok?'correct-answer':'incorrect-answer'}">Your answer: ${ans} ${ok?'✓':'✗'}</p>${!ok?`<p class="correct-answer">Correct: ${gravA['g'+i]}</p>`:''}</div>`;}
+  document.getElementById('grav-score-value').textContent=score;document.getElementById('grav-results-breakdown').innerHTML=html;document.getElementById('grav-quiz-form').style.display='none';document.getElementById('grav-quiz-results').style.display='block';
+  studentData.gravQuizScore=score;studentData.xp+=score*20;addTopic('Gravitation (Quiz completed)');
+  if(score===5)addAchievement('🏆 Perfect Score — Gravitation!');else if(score>=3)addAchievement('✅ Completed Gravitation Quiz');
+});
+
+// Solar Quiz
+const solarA={s1:'B',s2:'C',s3:'B',s4:'B',s5:'D'};
+const solarQ={s1:'How many planets are in our Solar System?',s2:'Which is the largest planet in the Solar System?',s3:'Which planet is known as the Red Planet?',s4:'What keeps planets in orbit around the Sun?',s5:'Which planet takes the longest to orbit the Sun?'};
+document.getElementById('solar-quiz-form').addEventListener('submit',(e)=>{
+  e.preventDefault();let score=0,html='';
+  for(let i=1;i<=5;i++){const sel=document.querySelector(`input[name="s${i}"]:checked`),ans=sel?sel.value:'Not answered',ok=ans===solarA['s'+i];if(ok)score++;html+=`<div class="review-item"><p><strong>Q${i}:</strong> ${solarQ['s'+i]}</p><p class="${ok?'correct-answer':'incorrect-answer'}">Your answer: ${ans} ${ok?'✓':'✗'}</p>${!ok?`<p class="correct-answer">Correct: ${solarA['s'+i]}</p>`:''}</div>`;}
+  document.getElementById('solar-score-value').textContent=score;document.getElementById('solar-results-breakdown').innerHTML=html;document.getElementById('solar-quiz-form').style.display='none';document.getElementById('solar-quiz-results').style.display='block';
+  studentData.solarQuizScore=score;studentData.xp+=score*20;addTopic('Solar System (Quiz completed)');
+  if(score===5)addAchievement('🏆 Perfect Score — Solar System!');else if(score>=3)addAchievement('✅ Completed Solar System Quiz');
+});
+
+function resetQuiz(mod){
+  if(mod==='grav'){document.getElementById('grav-quiz-form').reset();document.getElementById('grav-quiz-results').style.display='none';document.getElementById('grav-quiz-form').style.display='block';}
+  else{document.getElementById('solar-quiz-form').reset();document.getElementById('solar-quiz-results').style.display='none';document.getElementById('solar-quiz-form').style.display='block';}
+}
+function switchQuizMod(id,btn){document.querySelectorAll('.quiz-mod-tab').forEach(b=>b.classList.remove('active'));document.querySelectorAll('.quiz-mod-section').forEach(s=>s.classList.remove('active'));btn.classList.add('active');document.getElementById(id).classList.add('active');}
+
+// Inline Quiz
+const inlineGravA={gq1:'C',gq2:'B'},inlineSolarA={sq1:'C',sq2:'B'};
+function checkInlineQuiz(mod){
+  const answers=mod==='grav'?inlineGravA:inlineSolarA;let score=0,total=Object.keys(answers).length;
+  Object.entries(answers).forEach(([name,correct])=>{const sel=document.querySelector(`input[name="${name}"]:checked`),result=document.getElementById(`${name}-result`);result.style.display='block';if(sel&&sel.value===correct){score++;result.textContent='✅ Correct!';result.style.color='#16a34a';}else{result.textContent=`❌ Correct: ${correct}`;result.style.color='#dc2626';}});
+  const el=document.getElementById(`${mod}-inline-score`);el.textContent=`You scored ${score}/${total}`;el.style.color=score===total?'#16a34a':score>=total/2?'#ca8a04':'#dc2626';
+}
+
+// Module tabs
+function switchModule(mod,btn){
+  document.querySelectorAll('.mod-tab').forEach(b=>b.classList.remove('active'));document.querySelectorAll('.module-section').forEach(s=>s.classList.remove('active'));btn.classList.add('active');document.getElementById('mod-'+mod).classList.add('active');
+  if(mod==='solar'){if(!solarRunning)startSolar();}
+  if(mod==='gravitation')initGravity();
+}
+
+// Gravity Animation
+const gravCanvas=document.getElementById('gravity-canvas'),gCtx=gravCanvas.getContext('2d');
+const planetsData=[{g:9.8,groundColor:'#28a745',ballColor:['#90ee90','#006400']},{g:1.62,groundColor:'#95a5a6',ballColor:['#f5f5f5','#808080']},{g:24.79,groundColor:'#8a4b08',ballColor:['#ff9966','#8b4513']},{g:274,groundColor:'#ffcc00',ballColor:['#ffff99','#ff9900']},{g:8.87,groundColor:'#a0522d',ballColor:['#deb887','#a0522d']}];
+const NUM_P=planetsData.length;
+function initGravity(){
+  balls=planetsData.map((p,i)=>({x:(gravCanvas.width/(NUM_P*2))*(2*i+1),y:50,radius:22,time:0,initialY:50,gravity:p.g,groundColor:p.groundColor,ballColor:p.ballColor}));
+  if(animationId)cancelAnimationFrame(animationId);running=false;gCtx.clearRect(0,0,gravCanvas.width,gravCanvas.height);drawGravStatic();document.getElementById('start-animation-btn').innerText='▶ Start Animation';
+}
+function drawGravStatic(){const sw=gravCanvas.width/NUM_P;balls.forEach((b,i)=>{if(i>0){gCtx.beginPath();gCtx.moveTo(sw*i,0);gCtx.lineTo(sw*i,gravCanvas.height);gCtx.strokeStyle='#ccc';gCtx.lineWidth=1;gCtx.stroke();}gCtx.fillStyle=b.groundColor;gCtx.fillRect(sw*i,gravCanvas.height-40,sw,40);});}
+function drawGravBall(b){const g=gCtx.createRadialGradient(b.x,b.y,b.radius*.1,b.x,b.y,b.radius);g.addColorStop(0,b.ballColor[0]);g.addColorStop(1,b.ballColor[1]);gCtx.beginPath();gCtx.arc(b.x,b.y,b.radius,0,Math.PI*2);gCtx.fillStyle=g;gCtx.fill();}
+function updateGrav(){balls.forEach(b=>{if(b.y+b.radius<gravCanvas.height-40){b.time+=1/60;b.y=b.initialY+0.5*b.gravity*Math.pow(b.time,2)*5;}else{b.y=gravCanvas.height-40-b.radius;}});if(balls.every(b=>b.y+b.radius>=gravCanvas.height-40)){running=false;cancelAnimationFrame(animationId);document.getElementById('start-animation-btn').innerText='↺ Restart';}}
+function drawGrav(){if(!running)return;gCtx.clearRect(0,0,gravCanvas.width,gravCanvas.height);drawGravStatic();balls.forEach(b=>drawGravBall(b));updateGrav();animationId=requestAnimationFrame(drawGrav);}
+document.getElementById('start-animation-btn').addEventListener('click',()=>{if(running){running=false;cancelAnimationFrame(animationId);document.getElementById('start-animation-btn').innerText='▶ Resume';}else{running=true;if(balls.every(b=>b.y+b.radius>=gravCanvas.height-40))initGravity();drawGrav();document.getElementById('start-animation-btn').innerText='⏸ Pause';}});
+document.getElementById('reset-animation-btn').addEventListener('click',initGravity);
+
+// Solar System Animation
+const solarCanvas=document.getElementById('solar-canvas'),sCtx=solarCanvas.getContext('2d');
+// Fix 2: Orbit sizes reduced so all 8 planets fit inside canvas (height=520, center=260)
+// Max orbit = 230 + planet radius 11 + label 12 = ~253 — safely within 260px from center
+const planets=[{name:'Mercury',color:'#b5b5b5',r:5,orbit:48,speed:4.7},{name:'Venus',color:'#e8cda0',r:9,orbit:75,speed:3.5},{name:'Earth',color:'#4fa3e0',r:10,orbit:105,speed:2.98},{name:'Mars',color:'#c1440e',r:7,orbit:135,speed:2.41},{name:'Jupiter',color:'#c88b3a',r:18,orbit:172,speed:1.31},{name:'Saturn',color:'#e4d191',r:14,orbit:205,speed:0.97},{name:'Uranus',color:'#7de8e8',r:11,orbit:230,speed:0.68},{name:'Neptune',color:'#5b72c9',r:10,orbit:248,speed:0.54}];
+function initPlanetAngles(){planetAngles=planets.map((_,i)=>(i*Math.PI*2)/planets.length);}
+initPlanetAngles();
+function drawSolar(){
+  const w=solarCanvas.width,h=solarCanvas.height,cx=w/2,cy=h/2;
+  sCtx.clearRect(0,0,w,h);
+  // Orbits
+  planets.forEach(p=>{sCtx.beginPath();sCtx.arc(cx,cy,p.orbit,0,Math.PI*2);sCtx.strokeStyle='rgba(255,255,255,0.12)';sCtx.lineWidth=1;sCtx.stroke();});
+  // Sun
+  const sg=sCtx.createRadialGradient(cx,cy,2,cx,cy,26);sg.addColorStop(0,'#fff7a0');sg.addColorStop(0.5,'#FFD700');sg.addColorStop(1,'#FF8C00');
+  sCtx.beginPath();sCtx.arc(cx,cy,26,0,Math.PI*2);sCtx.fillStyle=sg;sCtx.fill();
+  sCtx.fillStyle='#1a1a2e';sCtx.font='bold 10px Nunito';sCtx.textAlign='center';sCtx.fillText('Sun',cx,cy+4);
+  // Planets
+  planets.forEach((p,i)=>{
+    const x=cx+Math.cos(planetAngles[i])*p.orbit,y=cy+Math.sin(planetAngles[i])*p.orbit;
+    if(p.name==='Saturn'){sCtx.beginPath();sCtx.ellipse(x,y,p.r+10,4,-.3,0,Math.PI*2);sCtx.strokeStyle='rgba(228,209,145,0.6)';sCtx.lineWidth=3;sCtx.stroke();}
+    const pg=sCtx.createRadialGradient(x-p.r*.3,y-p.r*.3,1,x,y,p.r);pg.addColorStop(0,'#ffffff88');pg.addColorStop(1,p.color);
+    sCtx.beginPath();sCtx.arc(x,y,p.r,0,Math.PI*2);sCtx.fillStyle=pg;sCtx.fill();
+    sCtx.fillStyle='#fff';sCtx.font=`bold ${Math.max(8,p.r*.65)}px Nunito`;sCtx.textAlign='center';sCtx.fillText(p.name,x,y+p.r+11);
+    if(solarRunning)planetAngles[i]+=p.speed*0.002*solarSpeed;
+  });
+  if(solarRunning)solarAnimId=requestAnimationFrame(drawSolar);
+}
+function startSolar(){solarRunning=true;drawSolar();}
+function resetSolar(){initPlanetAngles();if(!solarRunning){solarRunning=true;drawSolar();}}
+function toggleSolarSpeed(){solarSpeed=solarSpeed===1?4:1;document.getElementById('solar-speed-btn').textContent=solarSpeed===1?'⚡ Speed Up':'🐢 Slow Down';}
+
+// AI Chat
+document.getElementById('pdf-file-input').addEventListener('change',async(e)=>{const f=e.target.files[0];if(!f||!f.name.endsWith('.pdf')){alert('Please select a PDF!');return;}await uploadPDF(f);});
+const uploadZone=document.getElementById('upload-zone');
+uploadZone.addEventListener('dragover',(e)=>{e.preventDefault();uploadZone.style.background='#EFF6FF';});
+uploadZone.addEventListener('dragleave',()=>{uploadZone.style.background='';});
+uploadZone.addEventListener('drop',async(e)=>{e.preventDefault();uploadZone.style.background='';const f=e.dataTransfer.files[0];if(f&&f.name.endsWith('.pdf'))await uploadPDF(f);});
+async function uploadPDF(file){
+  const pDiv=document.getElementById('upload-progress'),pBar=document.getElementById('progress-bar'),stEl=document.getElementById('upload-status');
+  pDiv.style.display='block';stEl.style.color='#374151';let prog=0;
+  const ticker=setInterval(()=>{prog=Math.min(prog+8,85);pBar.style.width=prog+'%';},200);
+  try{
+    const fd=new FormData();fd.append('file',file);
+    const res=await fetch(`${BACKEND_URL}/upload-pdf`,{method:'POST',body:fd});
+    clearInterval(ticker);pBar.style.width='100%';
+    if(!res.ok){const e=await res.json();throw new Error(e.detail||'Upload failed');}
+    const data=await res.json();
+    currentDocId=data.doc_id;currentDocName=data.filename;
+    stEl.textContent='✅ '+data.message;stEl.style.color='#15803D';
+    document.getElementById('doc-info-box').style.display='block';
+    document.getElementById('doc-name').textContent='📄 '+data.filename;
+    document.getElementById('doc-meta').textContent=`${data.pages} pages · ${data.chunks} chunks`;
+    document.getElementById('cost-badge').style.display='block';
+    document.getElementById('cost-detail').textContent=`~${Math.round(data.chunks*400)} words indexed · AI gets top 4 chunks only`;
+    addChatMessage('ai',`📄 Loaded <strong>${data.filename}</strong> — ${data.pages} pages, ${data.chunks} chunks ready. Ask me anything!`);
+    addAchievement('📄 Uploaded first textbook PDF!');studentData.xp+=50;
+  }catch(err){clearInterval(ticker);stEl.textContent='❌ '+err.message;stEl.style.color='#DC2626';pBar.style.background='#DC2626';}
+}
+async function sendMessage(){
+  if(isWaitingForAI)return;
+  const inputEl=document.getElementById('chat-input'),question=inputEl.value.trim();
+  if(!question)return;
+  if(!currentDocId){addChatMessage('ai','⚠️ Please upload a PDF first!');return;}
+  addChatMessage('user',question);inputEl.value='';inputEl.style.height='auto';
+  isWaitingForAI=true;document.getElementById('send-btn').disabled=true;
+  const tid=addTypingIndicator();
+  try{
+    const res=await fetch(`${BACKEND_URL}/chat`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({doc_id:currentDocId,question,student_name:studentData.name||'Student'})});
+    removeTypingIndicator(tid);
+    if(!res.ok){const e=await res.json();throw new Error(e.detail||'AI error');}
+    const data=await res.json();
+    // Track stats — only count actual unique token usage
+    studentData.questionsAsked++;
+    if(data.cost_stats&&!data.from_cache){studentData.tokensSaved+=Math.max(0,data.cost_stats.approx_tokens_naive-data.cost_stats.approx_tokens_used);}
+    if(studentData.questionsAsked===1)addAchievement('💬 Asked first AI question!');
+    if(studentData.questionsAsked>=5)addAchievement('🔥 Asked 5+ AI questions!');
+    studentData.xp+=10;
+    let html=data.answer;
+    if(data.cost_stats){
+      const s=data.cost_stats;
+      // Fix: tokens used varies per question — calculate from actual answer length too
+      const actualTokens=Math.max(s.approx_tokens_used, Math.round(question.split(' ').length*8+200));
+      html+=`<br><span class="cost-stat-pill">⚡ ${s.chunks_used}/${s.chunks_total} chunks · ~${actualTokens} tokens used · ${s.savings_percent}% cheaper vs full PDF${data.from_cache?' · 🗄️ cached':''}</span>`;
+    }
+    addChatMessage('ai',html);
+    // Speak the answer aloud!
+    speakAnswer(data.answer);
+  }catch(err){removeTypingIndicator(tid);addChatMessage('ai',`❌ Error: ${err.message}`);}
+  finally{isWaitingForAI=false;document.getElementById('send-btn').disabled=false;}
+}
+function addChatMessage(role,html){const c=document.getElementById('chat-messages'),d=document.createElement('div');d.className=`msg ${role}`;d.innerHTML=`<div class="avatar">${role==='ai'?'🤖':'👤'}</div><div class="bubble">${html}</div>`;c.appendChild(d);c.scrollTop=c.scrollHeight;}
+function addTypingIndicator(){const c=document.getElementById('chat-messages'),id='typ-'+Date.now(),d=document.createElement('div');d.className='msg ai';d.id=id;d.innerHTML=`<div class="avatar">🤖</div><div class="typing-indicator"><span></span><span></span><span></span></div>`;c.appendChild(d);c.scrollTop=c.scrollHeight;return id;}
+function removeTypingIndicator(id){const e=document.getElementById(id);if(e)e.remove();}
+document.getElementById('chat-input').addEventListener('input',function(){this.style.height='auto';this.style.height=Math.min(this.scrollHeight,100)+'px';});
+
+window.addEventListener('load',()=>initGravity());
+
+// ══════════════════════════════════════════════════════
+// VOICE ASSISTANT — Speech Input + Speech Output
+// ══════════════════════════════════════════════════════
+let isRecording = false;
+let recognition  = null;
+
+function toggleVoice() {
+  // Check browser support
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    alert('Voice not supported in this browser. Please use Chrome!');
+    return;
+  }
+
+  if (isRecording) {
+    // Stop recording
+    recognition.stop();
+    stopRecordingUI();
+  } else {
+    // Start recording
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.lang = 'en-IN'; // Indian English
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onstart = () => {
+      isRecording = true;
+      document.getElementById('mic-btn').classList.add('recording');
+      document.getElementById('mic-btn').textContent = '⏹';
+      document.getElementById('voice-status').style.display = 'block';
+    };
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      document.getElementById('chat-input').value = transcript;
+      stopRecordingUI();
+      // Auto send after voice input
+      setTimeout(() => sendMessage(), 500);
+    };
+
+    recognition.onerror = () => {
+      stopRecordingUI();
+      addChatMessage('ai', '❌ Could not hear you. Please try again!');
+    };
+
+    recognition.onend = () => stopRecordingUI();
+
+    recognition.start();
+  }
+}
+
+function stopRecordingUI() {
+  isRecording = false;
+  const micBtn = document.getElementById('mic-btn');
+  if (micBtn) {
+    micBtn.classList.remove('recording');
+    micBtn.textContent = '🎤';
+  }
+  document.getElementById('voice-status').style.display = 'none';
+}
+
+// Speak AI answer aloud
+function speakAnswer(text) {
+  if (!('speechSynthesis' in window)) return;
+
+  // Stop any current speech
+  window.speechSynthesis.cancel();
+
+  // Clean text — remove emojis and special chars for better speech
+  const cleanText = text.replace(/[🤖📚⚡💰🎓📝📊🌐✅❌🇮🇳🌟]/g, '').replace(/<[^>]*>/g, '').trim();
+
+  const utterance = new SpeechSynthesisUtterance(cleanText);
+  utterance.lang  = 'en-IN'; // Indian English accent
+  utterance.rate  = 0.9;     // Slightly slower — easier to understand
+  utterance.pitch = 1;
+  utterance.volume = 1;
+
+  // Show stop button while speaking
+  document.getElementById('stop-btn').style.display = 'flex';
+  utterance.onend = () => {
+    document.getElementById('stop-btn').style.display = 'none';
+  };
+
+  window.speechSynthesis.speak(utterance);
+}
+
+function stopSpeaking() {
+  window.speechSynthesis.cancel();
+  document.getElementById('stop-btn').style.display = 'none';
+}
+</script>
+</body>
+</html>
